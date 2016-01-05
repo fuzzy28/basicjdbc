@@ -6,12 +6,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jrue.poc.jdbc.constants.AppConstants;
 import org.jrue.poc.jdbc.constants.LogicalDelete;
 import org.jrue.poc.jdbc.model.User;
 import org.jrue.poc.jdbc.util.ConnectionPool;
 
 public class UserRepository implements Repository<User>, BatchRepository<User>{
 
+	
 	@Override
 	public List<User> find(String key) {
 		List<User> users = new ArrayList<User>();
@@ -50,9 +52,7 @@ public class UserRepository implements Repository<User>, BatchRepository<User>{
 		boolean isSuccessful;
 		try {
 			PreparedStatement insertStatement = 
-					ConnectionPool.getConnection().prepareStatement(
-							"INSERT INTO M_ACCOUNT (USERCD,USERNAME,PASSWORD,CASHIERPASSWORD,EMPLOYEEID,DELFLAG) " +
-							"VALUES (?, ? ,? ,? ,?, ?)");
+					ConnectionPool.getConnection().prepareStatement(AppConstants.SQL_INSERT);
 			insertStatement.setString(1, record.getUserCode());
 			insertStatement.setString(2, record.getUserName());
 			insertStatement.setString(3, record.getPassword());
@@ -110,8 +110,27 @@ public class UserRepository implements Repository<User>, BatchRepository<User>{
 
 	@Override
 	public boolean save(List<User> record) {
-		
-		return false;
+		boolean isSuccessful;
+		try {
+			PreparedStatement insertStatement = 
+					ConnectionPool.getConnection().prepareStatement(AppConstants.SQL_INSERT);
+			
+			for (User user : record) {
+				insertStatement.setString(1, user.getUserCode());
+				insertStatement.setString(2, user.getUserName());
+				insertStatement.setString(3, user.getPassword());
+				insertStatement.setString(4, user.getPassword());
+				insertStatement.setString(5, user.getEmployeeId());
+				insertStatement.setInt(6, LogicalDelete.NORMAL.getFlag());	
+				insertStatement.addBatch();
+			}
+				
+			isSuccessful = insertStatement.executeBatch().length == record.size();
+		} catch (SQLException e) {
+			isSuccessful = false;
+			e.printStackTrace();
+		}
+		return isSuccessful;
 	}
 
 	@Override
