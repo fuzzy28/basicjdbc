@@ -1,22 +1,38 @@
 package org.jrue.poc.jdbc.util;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
+import org.apache.commons.dbcp2.BasicDataSource;
+import org.jrue.poc.jdbc.constants.AppConstants;
+
+/**
+ * Singleton implementation of Connection Pooling
+ * 
+ * @author jruelos
+ * @since 1.6.2015
+ * 
+ * 
+ */
 public class ConnectionPool {
-	private static volatile Connection connection = null;
-		
+
+	private static volatile BasicDataSource datasource;
+	
 	private ConnectionPool() {}
-		
+	
 	public static Connection getConnection() throws SQLException {
-		if(connection == null) {
-			synchronized (ConnectionPool.class) {
-				if(connection == null) {
-					connection = DriverManager.getConnection("jdbc:oracle:thin:@172.16.137.9:1521:orcl","db_prod_backup","password123");
+		if(datasource == null) {
+			synchronized (Connection.class) {
+				if(datasource == null) {
+					datasource = new BasicDataSource();
+					datasource.setDriverClassName(AppConstants.SQL_CONNECTION_DRIVER);
+					datasource.setUrl(AppConstants.SQL_CONNECTION_URL);
+					datasource.setUsername(AppConstants.SQL_CONNECTION_USERNAME);
+					datasource.setPassword(AppConstants.SQL_CONNECTION_PASSWORD);
+					datasource.setInitialSize(AppConstants.SQL_CONNECTION_POOL_INIT_SIZE);
 				}
 			}
 		}
-		return connection;
+		return datasource.getConnection();
 	}
 }

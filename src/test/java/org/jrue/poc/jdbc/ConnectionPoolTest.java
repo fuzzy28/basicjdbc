@@ -12,5 +12,4 @@ public class ConnectionPoolTest {
 	public void testConnectivity() throws SQLException {
 		Assert.assertNotNull(ConnectionPool.getConnection());
 	}
-	
 }

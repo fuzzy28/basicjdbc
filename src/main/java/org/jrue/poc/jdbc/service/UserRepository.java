@@ -1,5 +1,6 @@
 package org.jrue.poc.jdbc.service;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -11,25 +12,30 @@ import org.jrue.poc.jdbc.constants.LogicalDelete;
 import org.jrue.poc.jdbc.model.User;
 import org.jrue.poc.jdbc.util.ConnectionPool;
 
-public class UserRepository implements Repository<User>, BatchRepository<User>{
+public class UserRepository extends Repository<User> implements BatchRepository<User>{
 
 	
 	@Override
 	public List<User> find(String key) {
+
+		Connection connection = null;
+		PreparedStatement statement = null;
+		ResultSet resultSet = null;		
+		
 		List<User> users = new ArrayList<User>();
 		try {
+			connection = ConnectionPool.getConnection();
 			final boolean hasParameter = (key != null && key.length() > 0);
 			String query = String.format("SELECT USERCD,USERNAME,PASSWORD,EMPLOYEEID FROM M_ACCOUNT %s", 
 					hasParameter ? "WHERE USERCD = ? AND DELFLAG = ?" : "");
-			PreparedStatement statement = ConnectionPool.getConnection()
-											.prepareStatement(query);
+			statement = connection.prepareStatement(query);
 			
 			if(hasParameter) {
 				statement.setString(1, key);
 				statement.setInt(2, LogicalDelete.NORMAL.getFlag());
 			}
 			
-			ResultSet resultSet = statement.executeQuery();
+			resultSet = statement.executeQuery();
 			while(resultSet.next()) {
 				User user = new User();
 				user.setUserCode(resultSet.getString("USERCD"));
@@ -42,6 +48,10 @@ public class UserRepository implements Repository<User>, BatchRepository<User>{
 		} catch (SQLException e) {
 			users = null;
 			e.printStackTrace();
+		} finally {
+			closeResultSet(resultSet);
+			closeStatement(statement);
+			closeConnection(connection);
 		}
 		
 		return users;
@@ -50,9 +60,11 @@ public class UserRepository implements Repository<User>, BatchRepository<User>{
 	@Override
 	public boolean save(User record) {
 		boolean isSuccessful;
+		Connection connection = null;
+		PreparedStatement insertStatement = null;		
 		try {
-			PreparedStatement insertStatement = 
-					ConnectionPool.getConnection().prepareStatement(AppConstants.SQL_INSERT);
+			connection = ConnectionPool.getConnection();
+			insertStatement = connection.prepareStatement(AppConstants.SQL_INSERT);
 			insertStatement.setString(1, record.getUserCode());
 			insertStatement.setString(2, record.getUserName());
 			insertStatement.setString(3, record.getPassword());
@@ -63,6 +75,9 @@ public class UserRepository implements Repository<User>, BatchRepository<User>{
 		} catch (SQLException e) {
 			isSuccessful = false;
 			e.printStackTrace();
+		} finally {
+			closeStatement(insertStatement);
+			closeConnection(connection);
 		}
 		return isSuccessful;
 	}
@@ -70,22 +85,27 @@ public class UserRepository implements Repository<User>, BatchRepository<User>{
 	@Override
 	public boolean update(User record) {		
 		boolean isSuccessful;
+		Connection connection = null;
+		PreparedStatement updateStatement = null;
 		try {
-			PreparedStatement insertStatement = 
-					ConnectionPool.getConnection().prepareStatement(
+			connection = ConnectionPool.getConnection();
+			updateStatement = connection.prepareStatement(
 							"UPDATE M_ACCOUNT SET USERNAME = ?,PASSWORD = ?,CASHIERPASSWORD = ?,EMPLOYEEID = ?,DELFLAG = ? " +
 							",UPDPERSON = ? WHERE USERCD = ?");
-			insertStatement.setString(1, record.getUserName());
-			insertStatement.setString(2, record.getPassword());
-			insertStatement.setString(3, record.getPassword());
-			insertStatement.setString(4, record.getEmployeeId());
-			insertStatement.setInt(5, LogicalDelete.NORMAL.getFlag());	
-			insertStatement.setString(6, record.getUserCode());					
-			insertStatement.setString(7, record.getUserCode());			
-			isSuccessful = insertStatement.executeUpdate() > 0;
+			updateStatement.setString(1, record.getUserName());
+			updateStatement.setString(2, record.getPassword());
+			updateStatement.setString(3, record.getPassword());
+			updateStatement.setString(4, record.getEmployeeId());
+			updateStatement.setInt(5, LogicalDelete.NORMAL.getFlag());	
+			updateStatement.setString(6, record.getUserCode());					
+			updateStatement.setString(7, record.getUserCode());			
+			isSuccessful = updateStatement.executeUpdate() > 0;
 		} catch (SQLException e) {
 			isSuccessful = false;
 			e.printStackTrace();
+		} finally {
+			closeStatement(updateStatement);
+			closeConnection(connection);
 		}
 		return isSuccessful;
 	}
@@ -94,16 +114,21 @@ public class UserRepository implements Repository<User>, BatchRepository<User>{
 	@Override
 	public boolean delete(User record) {
 		boolean isSuccessful;
+		Connection connection = null;
+		PreparedStatement updateStatement = null;
 		try {
-			PreparedStatement insertStatement = 
-					ConnectionPool.getConnection().prepareStatement(
+			connection = ConnectionPool.getConnection();			
+			updateStatement = connection.prepareStatement(
 							"UPDATE M_ACCOUNT SET DELFLAG = ? WHERE USERCD = ?");
-			insertStatement.setInt(1, LogicalDelete.DELETED.getFlag());			
-			insertStatement.setString(2, record.getUserCode());		
-			isSuccessful = insertStatement.executeUpdate() > 0;
+			updateStatement.setInt(1, LogicalDelete.DELETED.getFlag());			
+			updateStatement.setString(2, record.getUserCode());		
+			isSuccessful = updateStatement.executeUpdate() > 0;
 		} catch (SQLException e) {
 			isSuccessful = false;
 			e.printStackTrace();
+		} finally {
+			closeStatement(updateStatement);
+			closeConnection(connection);
 		}
 		return isSuccessful;
 	}
@@ -111,9 +136,11 @@ public class UserRepository implements Repository<User>, BatchRepository<User>{
 	@Override
 	public boolean save(List<User> record) {
 		boolean isSuccessful;
+		Connection connection = null;
+		PreparedStatement insertStatement = null;
 		try {
-			PreparedStatement insertStatement = 
-					ConnectionPool.getConnection().prepareStatement(AppConstants.SQL_INSERT);
+			connection = ConnectionPool.getConnection();
+			insertStatement = connection.prepareStatement(AppConstants.SQL_INSERT);
 			
 			for (User user : record) {
 				insertStatement.setString(1, user.getUserCode());
@@ -129,6 +156,9 @@ public class UserRepository implements Repository<User>, BatchRepository<User>{
 		} catch (SQLException e) {
 			isSuccessful = false;
 			e.printStackTrace();
+		} finally {
+			closeStatement(insertStatement);
+			closeConnection(connection);
 		}
 		return isSuccessful;
 	}
