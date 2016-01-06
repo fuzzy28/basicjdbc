@@ -33,8 +33,7 @@ public class UserRepository extends Repository<User> implements BatchRepository<
 			if(hasParameter) {
 				statement.setString(1, key);
 				statement.setInt(2, LogicalDelete.NORMAL.getFlag());
-			}
-			
+			}			
 			resultSet = statement.executeQuery();
 			while(resultSet.next()) {
 				User user = new User();
