@@ -7,9 +7,14 @@ import org.jrue.poc.jdbc.util.ConnectionPool;
 import org.junit.Assert;
 import org.junit.Test;
 public class ConnectionPoolTest {
+	
+	static String a;	
+	private ConnectionPoolTest() {
+		a = "Test";
+	}
 
-	@Test
-	public void testConnectivity() throws SQLException {
-		Assert.assertNotNull(ConnectionPool.getConnection());
+	public static void main(String[] args) {
+
+		System.out.println(a);
 	}
 }
